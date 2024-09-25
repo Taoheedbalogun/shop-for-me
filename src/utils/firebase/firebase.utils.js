@@ -7,6 +7,7 @@ import {
   signInWithRedirect,
   signInWithPopup,
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -22,29 +23,40 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 
 // Using google Authentication
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
 
-provider.setCustomParameters({
+googleProvider.setCustomParameters({
   prompt: "select_account",
 });
 
 export const auth = getAuth();
 
-export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+// sign in with google popup
+export const signInWithGooglePopup = () =>
+  signInWithPopup(auth, googleProvider);
+
+//sign in with google redirect
+export const signInWithGoogleRedirect = () =>
+  signInWithRedirect(auth, googleProvider);
 
 // FIRESTORE
 export const db = getFirestore();
 
 // method
 
-export const createUserDocumentFromAuth = async (userAuth) => {
+export const createUserDocumentFromAuth = async (
+  userAuth,
+  additionalInformation = {}
+) => {
+  if (!userAuth) return;
+
   const userDocRef = doc(db, "user", userAuth.uid);
 
-  //   console.log(userDocRef);
+  console.log(userDocRef);
   //   getting data related to a document
 
   const userSnapShot = await getDoc(userDocRef);
-  //   console.log(userSnapShot);
+  console.log(userSnapShot);
 
   // If user snapshot does not exist
   if (!userSnapShot.exists()) {
@@ -56,6 +68,7 @@ export const createUserDocumentFromAuth = async (userAuth) => {
         displayName,
         email,
         createdAt,
+        ...additionalInformation,
       });
     } catch (err) {
       console.log("Error creating user", err.message);
@@ -63,4 +76,12 @@ export const createUserDocumentFromAuth = async (userAuth) => {
   }
 
   return userDocRef;
+};
+
+// function for creating user with email / password
+
+export const createAuthUserWithEmailAndPassword = async (email, password) => {
+  if (!email || !password) return;
+
+  return await createUserWithEmailAndPassword(auth, email, password);
 };
